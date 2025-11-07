@@ -78,3 +78,53 @@ test_state1([[on, a, b],
              [on, c, table],
              [clear, a],
              [clear, c]]).
+
+
+% Start and Goal states (consistent with 4 blocks a,b,c,d)
+% You can change start/1 if you like; goal/1 matches the assignment’s intent,
+% with [clear, d] because d is the top block in the stack d-a-c-b-table.
+start([[on, a, b],
+       [on, b, table],
+       [on, c, table],
+       [on, d, table],
+       [clear, a],
+       [clear, c],
+       [clear, d]]).
+
+goal([[on, d, a],
+      [on, a, c],
+      [on, c, b],
+      [on, b, table],
+      [clear, d]]).
+
+% notYetVisited(State, PathSoFar): succeeds if no permutation of State is in PathSoFar
+% (treat states as sets; matches the approach described in the assignment).
+notYetVisited(State, PathSoFar):-
+    permutation(State, PermuteState),
+    \+ member(PermuteState, PathSoFar).
+
+% Helper: goal reached using set equality (order-insensitive comparison).
+goal_reached(S) :-
+    goal(G),
+    msort(S, CS),
+    msort(G, CG),
+    CS == CG.
+
+% depthFirst(+CurrentState, -PathFromCurrentToGoal, +VisitedStates)
+% Builds a list of states (Path) from Current to the goal, avoiding revisiting
+% any already-seen state up to permutation.
+% Trivial case: Current is the goal.
+depthFirst(S, [S], _) :-
+    goal_reached(S), !.
+
+% Recursive case: expand S to some S2 via one move, ensure S2 not yet visited
+% (up to permutation), and continue.
+depthFirst(S, [S|Ypath], Visited) :-
+    connect(S, S2),
+    notYetVisited(S2, Visited),
+    depthFirst(S2, Ypath, [S2|Visited]).
+
+% Convenience runner: solve(-Path) returns the sequence of states from start to goal.
+solve(Path) :-
+    start(S0),
+    depthFirst(S0, Path, [S0]).
