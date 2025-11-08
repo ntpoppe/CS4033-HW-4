@@ -1,3 +1,4 @@
+:- use_module(library(lists)).
 % A list of all blocks in the world.
 % We can modify this if we want more/less blocks.
 blocks([a, b, c, d]).
@@ -79,13 +80,8 @@ test_state1([[on, a, b],
              [clear, a],
              [clear, c]]).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% --------------------------- ADDED FOR ASSIGNMENT ---------------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- use_module(library(lists)).  % for msort/2
-
-% Start and Goal states (top blocks are exactly those with [clear,_])
+% The Start states
 start([[on, a, b],
        [on, b, table],
        [on, c, table],
@@ -94,33 +90,31 @@ start([[on, a, b],
        [clear, c],
        [clear, d]]).
 
-% Goal forms a single stack d-a-c-b on the table; d is the only clear block.
+% The goal forms a single stack on a table in the form d,a,c,b
 goal([[on, d, a],
       [on, a, c],
       [on, c, b],
       [on, b, table],
       [clear, d]]).
 
-% -------- FAST, NON-REDUNDANT SOLVER (order-insensitive, no permutations) ----
+% base_state() will serve to represent a typical state
+base_state(State, Base) :- msort(State, Base).
 
-% Canonical (order-insensitive) representation of a state
-canonical_state(State, Canon) :- msort(State, Canon).
-
-% Goal test using canonical forms
+% goal test using the base forms
 goal_reached(S) :-
     goal(G),
-    canonical_state(S, CS),
-    canonical_state(G, CG),
-    CS == CG.
+    base_state(S, BS),
+    base_state(G, BG),
+    BS == BG.
 
-% Visited check that treats states as sets without generating permutations
+% these visited checks that treats states as sets
 notYetVisited(State, Visited) :-
-    canonical_state(State, C),
+    base_state(State, B),
     \+ ( member(S, Visited),
-         canonical_state(S, CS),
-         C == CS ).
+         base_state(S, BS),
+         B == BS ).
 
-% Depth-first that expands only forward moves (avoids symmetric connect/2)
+% Depth-first will search sites visited and move accordingly
 depthFirst(S, [S], _) :-
     goal_reached(S), !.
 depthFirst(S, [S|Rest], Visited) :-
@@ -128,12 +122,7 @@ depthFirst(S, [S|Rest], Visited) :-
     notYetVisited(S2, Visited),
     depthFirst(S2, Rest, [S2|Visited]).
 
-% Public entry point
-solve(Path) :-
-    start(S0),
-    depthFirst(S0, Path, [S0]).
-
-% Convenience runner: solve(-Path) returns the sequence of states from start to goal.
+% This will return the sequence of states from start to the goal
 solve(Path) :-
     start(S0),
     depthFirst(S0, Path, [S0]).
