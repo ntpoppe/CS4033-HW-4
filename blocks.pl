@@ -65,7 +65,7 @@ move(X, table, Y, S1, S2) :-
 
 % There is a path from state S1 to state S2 when there is a move from S1 to S2.
 path(S1, S2):-
-	move(X, Y, Z, S1, S2).
+	move(_, _, _, S1, S2).
 
 % Connect is the symmetric version of path: states S1 and S2 are connected if 
 % there is a path from S1 to S2 or a path from S2 to S1.
